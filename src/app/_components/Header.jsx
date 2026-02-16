@@ -21,7 +21,7 @@ const Header = () => {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1 rounded-md bg-gradient-to-r from-purple-500 via-gray-400 to-blue-500 p-2">
+          <div className="flex items-center gap-1 rounded-md bg-linear-to-r from-purple-500 via-gray-400 to-blue-500 p-2">
             <Image
               src="/logo1.png"
               alt="logo"
@@ -36,7 +36,7 @@ const Header = () => {
         </Link>
 
         {/* Search */}
-        <form className="flex flex-1 max-w-[140px] sm:max-w-xs md:max-w-md items-center rounded-lg bg-slate-100 px-2 py-1">
+        <form className="flex flex-1 max-w-35 sm:max-w-xs md:max-w-md items-center rounded-lg bg-slate-100 px-2 py-1">
           <input
             type="text"
             placeholder="Search..."
