@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { GoSearch } from "react-icons/go";
 import { HiMenu, HiX } from "react-icons/hi";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser,SignIn } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 
 const Header = () => {
