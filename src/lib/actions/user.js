@@ -3,15 +3,34 @@
 import User from "../models/user.model";
 import { connect } from "../connectDB";
 
+// export async function createUser(user) {
+//   try {
+//     await connect();
+
+//     const newUser = await User.create(user);
+//     return JSON.parse(JSON.stringify(newUser));
+//   } catch (err) {
+//     console.error(err);
+//     throw err;
+//   }
+// }
+
+
+
+
 export async function createUser(user) {
   try {
+    console.log("🟡 Connecting to MongoDB...");
     await connect();
 
+    console.log("🟢 Creating user in DB:", user);
     const newUser = await User.create(user);
+
+    console.log("✅ User saved:", newUser._id);
     return JSON.parse(JSON.stringify(newUser));
   } catch (err) {
-    console.error(err);
-    throw err;
+    console.error("❌ MongoDB error:", err);
+    throw err; // IMPORTANT
   }
 }
 
