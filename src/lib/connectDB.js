@@ -1,7 +1,7 @@
 
 import mongoose from "mongoose";
 
-const MONGO_URL = process.env.MONGO_URL;
+const MONGO_URI = process.env.MONGO_URL;
 
 let cached = global.mongoose;
 
@@ -16,7 +16,7 @@ export const connect = async () => {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGO_URL, {
+    cached.promise = mongoose.connect(MONGO_URI, {
       dbName: "real_estate", // avoid spaces in db name
       bufferCommands: false,
       connectTimeoutMS: 30000,
