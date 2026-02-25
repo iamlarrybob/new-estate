@@ -67,7 +67,7 @@ export async function POST(req) {
       firstName: first_name,
       lastName: last_name,
       username:username,
-      email: email_addresses[0].email_address,
+      email: email_addresses?.[0]?.email_address,
       photo: image_url,
     };
 
