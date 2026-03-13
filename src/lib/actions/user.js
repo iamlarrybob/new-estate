@@ -1,7 +1,7 @@
 "use server";
 
 import User from "../models/user.model";
-import { connect } from "../connectDB";
+import { connectDB } from "../connectDB";
 
 // export async function createUser(user) {
 //   try {
@@ -14,25 +14,6 @@ import { connect } from "../connectDB";
 //     throw err;
 //   }
 // }
-
-
-
-
-export async function createUser(user) {
-  try {
-    console.log("🟡 Connecting to MongoDB...");
-    await connect();
-
-    console.log("🟢 Creating user in DB:", user);
-    const newUser = await User.create(user);
-
-    console.log("✅ User saved:", newUser._id);
-    return JSON.parse(JSON.stringify(newUser));
-  } catch (err) {
-    console.error("❌ MongoDB error:", err);
-    throw err; // IMPORTANT
-  }
-}
 
 //Type script
 
@@ -51,43 +32,35 @@ export async function createUser(user) {
 //         console.log(err);
 //     }
 // }
+export const createOrUpdateUser= async(
+    id,
+    first_name,
+    last_name,
+    image_url,
+    email_addresses
+) => {
 
-
-// import User from "../models/user.model";
-// import { connect } from "../mongodb/mongoose";
-
-// // import {connect }
-
-
-// export const createOrUpdateUser= async(
-//     id,
-//     first_name,
-//     last_name,
-//     image_url,
-//     email_addresses
-// ) => {
-
-//     try {
-//         await connect();
-//         const user = await User.findOneAndUpdate(
-//             {clerkId: id},
-//             {
-//                 $set: {
-//                     firstName: first_name,
-//                     lastName:last_name,
-//                     profilePicture:image_url,
-//                     email: email_addresses[0].email_address
-//                 }
-//             }, {
-//                 upsert: true, new:true
-//             }
-//         );
-//         return user;
+    try {
+        await connectDB();
+        const user = await User.findOneAndUpdate(
+            {clerkId: id},
+            {
+                $set: {
+                    firstName: first_name,
+                    lastName:last_name,
+                    profilePicture:image_url,
+                    email: email_addresses[0].email_address
+                }
+            }, {
+                upsert: true, new:true
+            }
+        );
+        return user;
         
-//     } catch (error) {
-//         console.log('error: could not create or update user:',error)
-//     }
-// };
+    } catch (error) {
+        console.log('error: could not create or update user:',error)
+    }
+};
 
 
 // export const deleteUser = async (id)  =>  {
