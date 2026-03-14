@@ -1,35 +1,60 @@
-import { verifyWebhook } from '@clerk/nextjs/webhooks'
-import { NextRequest } from 'next/server'
+import { verifyWebhook } from "@clerk/nextjs/webhooks";
+import { NextResponse } from "next/server";
+import { connectDB } from "@/app/BackEnd/utils/Database";
+import User from "@/app/BackEnd/models/user";
 
 export async function POST(req) {
   try {
-    const evt = await verifyWebhook(req)
+    const evt = await verifyWebhook(req);
 
-    // Do something with payload
-    // For this guide, log payload to console
-    const { id } = evt.data
-    const eventType = evt.type
-    if (eventType === 'user.created'){
-      console.log('user.created');
+    const eventType = evt?.type;
+    const { id } = evt?.data;
+
+    await connectDB();
+
+    // CREATE OR UPDATE USER
+    if (eventType === "user.created" || eventType === "user.updated") {
+      const {
+        first_name,
+        last_name,
+        image_url,
+        email_addresses,
+      } = evt?.data;
+
+      const email = email_addresses[0]?.email_address;
+
+      await User.findOneAndUpdate(
+        { clerkId: id },
+        {
+          firstName: first_name,
+          lastName: last_name,
+          email: email,
+          image: image_url,
+          clerkId: id,
+        },
+        { upsert: true, new: true }
+      );
+
+      console.log("User saved/updated");
     }
 
-    if (eventType === 'user.updated')
-    {
-      console.log('user.deleted');
-      
-    }
-    if (eventType === 'user.deleted')
-    {
-      console.log('user.deleted');
-      
+    // DELETE USER
+    if (eventType === "user.deleted") {
+      await User.findOneAndDelete({ clerkId: id });
+
+      console.log("User deleted");
     }
 
-    return new Response('Webhook received', { status: 200 })
+    return NextResponse.json({ message: "Webhook received" }, { status: 200 });
   } catch (err) {
-    console.error('Error verifying webhook:', err)
-    return new Response('Error verifying webhook', { status: 400 })
+    console.error("Error verifying webhook:", err);
+    return NextResponse.json(
+      { error: "Webhook verification failed" },
+      { status: 400 }
+    );
   }
 }
+
 
 // import { headers } from "next/headers";
 // import { Webhook } from "svix";
