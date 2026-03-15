@@ -66,7 +66,7 @@ export const createOrUpdateUser= async(
 export const deleteUser = async (id)  =>  {
 
     try{
-        await connect();
+        await connectDB();
         await User.findOneAndDelete({clerkId: id});
 
     }catch (error) {

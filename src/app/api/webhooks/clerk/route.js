@@ -1,59 +1,100 @@
-import { verifyWebhook } from "@clerk/nextjs/webhooks";
-import { NextResponse } from "next/server";
-import { connectDB } from "@/app/BackEnd/utils/Database";
-import User from "@/app/BackEnd/models/user";
+
+import { createOrUpdateUser, deleteUser } from "@/lib/actions/user";
+import { Webhook } from "svix";
+import { headers } from "next/headers";
+import { clerkClient } from "@clerk/nextjs/server";
 
 export async function POST(req) {
-  try {
-    const evt = await verifyWebhook(req);
+  const SIGNING_SECRET = process.env.SIGNING_SECRET;
+  if(!SIGNING_SECRET) {
+    throw new Error('Error: please add SIGNING_SECRET from clerk Dashboard to.env');
 
-    const eventType = evt?.type;
-    const { id } = evt?.data;
-
-    await connectDB();
-
-    // CREATE OR UPDATE USER
-    if (eventType === "user.created" || eventType === "user.updated") {
-      const {
-        first_name,
-        last_name,
-        image_url,
-        email_addresses,
-      } = evt?.data;
-
-      const email = email_addresses[0]?.email_address;
-
-      await User.findOneAndUpdate(
-        { clerkId: id },
-        {
-          firstName: first_name,
-          lastName: last_name,
-          email: email,
-          image: image_url,
-          clerkId: id,
-        },
-        { upsert: true, new: true }
-      );
-
-      console.log("User saved/updated");
-    }
-
-    // DELETE USER
-    if (eventType === "user.deleted") {
-      await User.findOneAndDelete({ clerkId: id });
-
-      console.log("User deleted");
-    }
-
-    return NextResponse.json({ message: "Webhook received" }, { status: 200 });
-  } catch (err) {
-    console.error("Error verifying webhook:", err);
-    return NextResponse.json(
-      { error: "Webhook verification failed" },
-      { status: 400 }
-    );
   }
+  const wh = new Webhook(SIGNING_SECRET);
+
+
+  const headerPayload = await headers();
+  const svix_id = headerPayload.get('svix-id');
+  const svix_timestamp = headerPayload.get('svix-timestamp');
+  const svix_signature = headerPayload.get('svix-signature');
+
+
+  if (!svix_id || !svix_timestamp || !svix_signature) {
+    return new Response('Error: Missing Svix header', {
+      status: 400,
+    })
+  }
+
+
+  const payload = await req.json();
+  const body = JSON.stringify(payload);
+
+  let evt;
+
+
+  try {
+    evt = wh.verify(body, {
+      'svix-id': svix_id,
+      'svix-timestamp':svix_timestamp,
+      'svix-signature': svix_signature,
+
+    });
+
+  } catch (err) {
+    console.error('Error: Could not verify Webhook:', err);
+    return new Response('Error: verifacation error', {
+      status: 400
+    })
+  }
+
+    const {id} = evt?.data;
+    const eventType = evt?.type;
+
+    if (eventType === 'user.created' || eventType === 'user.updated') {
+      const { first_name, last_name, image_url, email_addresses } = evt?.data;
+
+      try{
+        
+       const user = await createOrUpdateUser(
+        id, first_name,last_name,image_url,email_addresses
+       );
+       if (user && eventType === 'user.created') {
+        try {
+          await clerkClient.user.updateUserMetadata(id, {
+            publicMetadata: {
+              userMongoId: user._id,
+            },
+          });
+        }catch (err) {
+          console.log('Error: Could not update user metadata', err);
+          
+        }
+       }
+      } catch (err) {
+        console.log('Error: Could create or update user', err);
+        return new Response('Error: could not create or update user', {
+          status:400,
+        })
+        
+      }
+    }
+
+    if (eventType === 'user.deleted') {
+      try {
+        await deleteUser(id)
+      }catch (err) {
+        console.log('Error: Could not delete user:', err);
+        return new Response('Error: could not delete user', {
+          status:400,
+        })
+        
+      }
+    }
+
+    return new Response('Webhook received', {status: 200});
+
 }
+ 
 
 
 // import { headers } from "next/headers";
